@@ -1,11 +1,16 @@
-import { NativeCommands } from './commands.native';
-
 export class SongController {
+	private static current: HTMLAudioElement | null = null;
 	private audio: HTMLAudioElement;
-	private static instanceUrl: string | null = null;
 
 	constructor(url: string) {
+		// para o áudio anterior
+		if (SongController.current) {
+			SongController.current.pause();
+			SongController.current.currentTime = 0;
+		}
+
 		this.audio = new Audio(url);
+		SongController.current = this.audio;
 	}
 
 	Play = async () => {
@@ -17,7 +22,7 @@ export class SongController {
 	};
 
 	SetVolume = (value: number) => {
-		this.audio.volume = value != 0 ? value / 100 : 0;
+		this.audio.volume = value !== 0 ? value / 100 : 0;
 	};
 
 	Stop = () => {
@@ -25,10 +30,3 @@ export class SongController {
 		this.audio.currentTime = 0;
 	};
 }
-
-export const createSongController = async () => {
-	if (!SongController["instanceUrl"]) {
-		SongController["instanceUrl"] = await NativeCommands.StartStreamServer();
-	}
-	return new SongController(SongController["instanceUrl"]);
-};

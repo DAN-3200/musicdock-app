@@ -24,7 +24,7 @@ export const QueueView = () => {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto -mx-1 px-1">
+      <div className="flex-1 overflow-auto overflow-x-hidden -mx-1 px-1">
         {queue.length === 0 ? (
           <p className="font-mono text-[10px] text-zinc-400 dark:text-zinc-500 mt-2">
             Fila vazia. Use a aba Search para adicionar faixas.

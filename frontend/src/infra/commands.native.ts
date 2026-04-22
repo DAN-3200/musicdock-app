@@ -1,19 +1,20 @@
-import * as wails from '../../../frontend/wailsjs/go/commands/App';
+import * as wails from '../../../frontend/wailsjs/go/handlers/App';
+import { WindowMinimise, WindowHide } from '../../wailsjs/runtime';
 
 export class NativeCommands {
 	static Minimizar = async () => {
-		await wails.Minimize();
+		await WindowMinimise();
 	};
 
 	static CloseWindow = async () => {
 		await wails.CloseWindow();
 	};
 
-	static StartStreamServer = async (): Promise<string> => {
-		return await wails.StartStreamServer();
+	static getUrl = () => {
+		return 'http://localhost:8080/stream';
 	};
 
-	static GetSong = async (url: string): Promise<string> => {
-		return await wails.GetSong(url);
-	};
+	static WindowHide = () => {
+		WindowHide()
+	}
 }

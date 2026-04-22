@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { createSongController, SongController } from "../src/infra/musicApi";
+import { SongController } from "../src/infra/musicApi";
 import { NativeCommands } from "../src/infra/commands.native";
+import { WindowHide, WindowMinimise } from "../wailsjs/runtime"
 
 export const PageTestView = () => {
    const [volume, setVolume] = useState(50);
@@ -9,29 +10,26 @@ export const PageTestView = () => {
    const [url, setUrl] = useState('')
 
    useEffect(() => {
-      (async () => {
-         const conn = await NativeCommands.StartStreamServer()
-         songRef.current = new SongController(conn);
-      })();
-   }, [url]);
-
-   useEffect(() => {
-      if (songRef.current) {
-         songRef.current.SetVolume(volume);
-      }
-   }, [volume]);
+      console.log(url)
+      const ad = new SongController(`http://localhost:8080/stream?url=${url}`)
+      songRef.current = ad
+   }, [url])
 
    return (
-      <div className="p-4 text-white space-x-2">
-         <input type="text" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={(e) => {
+      <div className="p-4 text-white gap-2 flex flex-col">
+
+         <button onClick={() => songRef.current?.Play()}>PLAY</button>
+         <button onClick={() => songRef.current?.Pause()}>PAUSE</button>
+         <button onClick={() => WindowMinimise()}>EXIT</button>
+
+         <input className="ring-2 ring-white px-2" type="text" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={(e) => {
             if (e.key === "Enter") {
                setUrl(search)
             }
          }} />
-         <button onClick={() => songRef.current?.Play()}>PLAY</button>
-         <button onClick={() => songRef.current?.Pause()}>PAUSE</button>
 
          <input
+            className="ring-2 ring-white px-2 w-15"
             type="number"
             max={100}
             min={0}

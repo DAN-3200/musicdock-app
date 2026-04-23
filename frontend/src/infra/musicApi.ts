@@ -29,4 +29,18 @@ export class SongController {
 		this.audio.pause();
 		this.audio.currentTime = 0;
 	};
+
+	Duration = () => {
+		return this.formatTime(this.audio.duration);
+	};
+
+	SkipForward = (seconds: number) => {
+		this.audio.currentTime += seconds;
+	};
+
+	formatTime(seconds: number) {
+		const m = Math.floor(seconds / 60);
+		const s = Math.floor(seconds % 60);
+		return `${m}:${s.toString().padStart(2, '0')}`;
+	}
 }

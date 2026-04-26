@@ -13,7 +13,7 @@ import (
 var assets embed.FS
 
 func main() {
-	app := handlers.NewApp()
+	app := handlers.InitHandlers()
 
 	err := wails.Run(&options.App{
 		Title:         "music-app",

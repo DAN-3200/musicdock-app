@@ -1,4 +1,4 @@
-import * as wails from '../../../frontend/wailsjs/go/handlers/App';
+import * as wails from '../../../frontend/wailsjs/go/handlers/Handler';
 import { WindowMinimise, WindowHide } from '../../wailsjs/runtime';
 
 export class NativeCommands {
@@ -10,11 +10,23 @@ export class NativeCommands {
 		await wails.CloseWindow();
 	};
 
-	static getUrl = () => {
-		return 'http://localhost:8080/stream';
+	static SaveSongDialog = async () => {
+		return await wails.SaveSongDialog('minha_musica');
+	};
+
+	static GetAudioUrl = async (url: string) => {
+		return await wails.GetAudioUrl(url);
+	};
+
+	static DownloadSong = async (url: string, pathName: string) => {
+		await wails.DownloadSong(url, pathName);
 	};
 
 	static WindowHide = () => {
-		WindowHide()
-	}
+		WindowHide();
+	};
+
+	static GetSearchSuggestions = async (input: string) => {
+		return await wails.GetSearchSuggestions(input);
+	};
 }

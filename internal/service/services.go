@@ -22,40 +22,99 @@ type VideoResult struct {
 }
 
 func SearchVideos(query string) ([]VideoResult, error) {
-	// 1. Prepara a URL de busca
-	url := fmt.Sprintf("https://www.youtube.com/results?search_query=%s&sp=EgIQAQ%%253D%%253D", strings.ReplaceAll(query, " ", "+"))
+	url := fmt.Sprintf(
+		"https://www.youtube.com/results?search_query=%s&sp=EgIQAQ%%253D%%253D",
+		strings.ReplaceAll(query, " ", "+"),
+	)
 
-	// 2. Faz a requisição simulando um navegador real
-	req, _ := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	html := string(body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
-	// 3. Extrai o ID, Título e Canal usando padrões que o YouTube mantém há anos
-	// O segredo é que o videoId e o Title sempre andam juntos no JSON da página
-	reID := regexp.MustCompile(`"videoId":"([^"]+)"`)
-	reTitle := regexp.MustCompile(`"title":\{"runs":\[\{"text":"([^"]+)"\}\]`)
+	// O YouTube embute os dados como: var ytInitialData = {...};
+	// Extraímos esse bloco JSON e navegamos até os resultados.
+	re := regexp.MustCompile(`var ytInitialData\s*=\s*(\{.+?\});\s*</script>`)
+	match := re.FindSubmatch(body)
+	if match == nil {
+		return nil, fmt.Errorf("ytInitialData não encontrado na página")
+	}
 
-	ids := reID.FindAllStringSubmatch(html, 15)
-	titles := reTitle.FindAllStringSubmatch(html, 15)
+	// Estrutura mínima para chegar nos videoRenderers
+	var page struct {
+		Contents struct {
+			TwoColumnSearchResultsRenderer struct {
+				PrimaryContents struct {
+					SectionListRenderer struct {
+						Contents []struct {
+							ItemSectionRenderer struct {
+								Contents []struct {
+									VideoRenderer *struct {
+										VideoID string `json:"videoId"`
+										Title   struct {
+											Runs []struct {
+												Text string `json:"text"`
+											} `json:"runs"`
+										} `json:"title"`
+									} `json:"videoRenderer"`
+								} `json:"contents"`
+							} `json:"itemSectionRenderer"`
+						} `json:"contents"`
+					} `json:"sectionListRenderer"`
+				} `json:"primaryContents"`
+			} `json:"twoColumnSearchResultsRenderer"`
+		} `json:"contents"`
+	}
 
+	if err := json.Unmarshal(match[1], &page); err != nil {
+		return nil, fmt.Errorf("erro ao parsear ytInitialData: %w", err)
+	}
+
+	seen := make(map[string]struct{})
 	var results []VideoResult
-	for i := 0; i < len(ids) && i < len(titles); i++ {
-		id := ids[i][1]
-		results = append(results, VideoResult{
-			ID:        id,
-			Title:     titles[i][1],
-			Thumbnail: fmt.Sprintf("https://i.ytimg.com/vi/%s/hqdefault.jpg", id),
-			Url:       "https://www.youtube.com/watch?v=" + id,
-		})
+
+	sections := page.Contents.TwoColumnSearchResultsRenderer.
+		PrimaryContents.SectionListRenderer.Contents
+
+	for _, section := range sections {
+		for _, item := range section.ItemSectionRenderer.Contents {
+			vr := item.VideoRenderer
+			if vr == nil || vr.VideoID == "" {
+				continue
+			}
+			if len(vr.Title.Runs) == 0 {
+				continue
+			}
+
+			// Descarta duplicatas (o mesmo videoId pode aparecer em mais de uma seção)
+			if _, dup := seen[vr.VideoID]; dup {
+				continue
+			}
+			seen[vr.VideoID] = struct{}{}
+
+			results = append(results, VideoResult{
+				ID:        vr.VideoID,
+				Title:     vr.Title.Runs[0].Text,
+				Thumbnail: fmt.Sprintf("https://i.ytimg.com/vi/%s/hqdefault.jpg", vr.VideoID),
+				Url:       "https://www.youtube.com/watch?v=" + vr.VideoID,
+			})
+
+			if len(results) == 15 {
+				return results, nil
+			}
+		}
 	}
 
 	return results, nil

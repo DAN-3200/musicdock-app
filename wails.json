@@ -1,7 +1,7 @@
 {
 	"$schema": "https://wails.io/schemas/config.v2.json",
-	"name": "MusicApp",
-	"outputfilename": "MusicApp",
+	"name": "MusicDock",
+	"outputfilename": "MusicDock",
 	"frontend:install": "bun install",
 	"frontend:build": "bun run build",
 	"frontend:dev:watcher": "bun run dev",

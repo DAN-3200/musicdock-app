@@ -17,8 +17,8 @@ func main() {
 
 	err := wails.Run(&options.App{
 		Title:         "music-app",
-		Width:         440,
-		Height:        400,
+		Width:         480,
+		Height:        480,
 		Frameless:     true,
 		DisableResize: true,
 		AssetServer: &assetserver.Options{

@@ -9,7 +9,7 @@ import (
 )
 
 func Test_SearchVideos(t *testing.T) {
-	res, err := service.SearchVideos("ncs")
+	res, err := service.SearchVideos("sbr funk")
 	require.NoError(t, err)
 
 	b, _ := json.MarshalIndent(res, "", "  ")

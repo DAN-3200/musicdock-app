@@ -67,7 +67,6 @@
 /* 4. Estilos de Base (Reset e Globais) */
 @layer base {
 	* {
-		@apply border-border outline-ring/50;
 		font-family: var(--font-sans);
 		user-select: none;
 	}

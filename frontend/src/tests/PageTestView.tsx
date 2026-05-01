@@ -5,11 +5,11 @@ import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, VolumeX, Volume1,
   Download, Loader2, ListMusic, Disc3, Minus,
+  Shuffle, Repeat, Repeat1, Infinity as InfinityIcon,
 } from "lucide-react";
 
 import { SongController } from "../infra/song.controller";
 import { usePlayer, useSearch, useSearchSuggestions } from "./usePlayer";
-import type { VideoResult } from "./usePlayer";
 import { NativeCommands } from "../infra/commands.native";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -58,10 +58,12 @@ export const PageTestView = () => {
     volume, setVolume, currentTime, duration,
     isLoading, isDownloading, isPlaying, isPaused,
     play, pause, seek, download,
+    autoplay, shuffle, loop,
+    toggleAutoplay, toggleShuffle, cycleLoop,
   } = usePlayer();
 
   const { results, search } = useSearch();
-  const queueIds = useMemo(() => new Set(queue.map((v) => v.id)), [queue]);
+  const queueIds = useMemo(() => new Set(queue.map((v: any) => v.id)), [queue]);
 
   const [view, setView] = useState<View>("player");
   const [query, setQuery] = useState("");
@@ -186,7 +188,7 @@ export const PageTestView = () => {
                   </div>
 
                   {/* Transport */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       type="button" onClick={playPrev} disabled={!hasPrev}
                       className="ghost-btn w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -218,9 +220,42 @@ export const PageTestView = () => {
 
                     <div className="flex-1" />
 
+                    {/* Playback modes: shuffle · loop · autoplay */}
+                    <button
+                      type="button" onClick={toggleShuffle}
+                      className={`ghost-btn w-8 h-10 ${shuffle ? "bg-yellow-400 text-neutral-900 border-yellow-400" : ""}`}
+                      aria-label={`Shuffle ${shuffle ? "on" : "off"}`}
+                      aria-pressed={shuffle}
+                      title={`Shuffle: ${shuffle ? "ON" : "OFF"}`}
+                    >
+                      <Shuffle className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    </button>
+                    <button
+                      type="button" onClick={cycleLoop}
+                      className={`ghost-btn w-8 h-10 relative ${loop !== "off" ? "bg-yellow-400 text-neutral-900 border-yellow-400" : ""}`}
+                      aria-label={`Loop ${loop}`}
+                      title={`Loop: ${loop.toUpperCase()}`}
+                    >
+                      {loop === "one"
+                        ? <Repeat1 className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        : <Repeat className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                      {loop === "all" && (
+                        <span className="absolute -top-0.5 -right-0.5 label-mono text-[7px] bg-neutral-900 text-yellow-400 px-0.5 leading-none py-[1px]">A</span>
+                      )}
+                    </button>
+                    <button
+                      type="button" onClick={toggleAutoplay}
+                      className={`ghost-btn w-8 h-10 ${autoplay ? "bg-yellow-400 text-neutral-900 border-yellow-400" : ""}`}
+                      aria-label={`Autoplay ${autoplay ? "on" : "off"}`}
+                      aria-pressed={autoplay}
+                      title={`Autoplay: ${autoplay ? "ON" : "OFF"}`}
+                    >
+                      <InfinityIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    </button>
+
                     <button
                       type="button" disabled={isDownloading || !activeItem} onClick={download}
-                      className="ghost-btn w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="ghost-btn w-10 h-10 disabled:opacity-30 disabled:cursor-not-allowed ml-1"
                       aria-label="Archive"
                     >
                       {isDownloading
@@ -229,7 +264,7 @@ export const PageTestView = () => {
                     </button>
                   </div>
 
-                  {/* Volume */}
+                  {/* Volume row */}
                   <div className="flex items-center gap-2 border-t-2 border-neutral-900 pt-2">
                     <button
                       type="button" onClick={toggleMute}

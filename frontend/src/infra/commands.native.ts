@@ -31,6 +31,6 @@ export class NativeCommands {
 	};
 
 	static SearchVideos = async (query: string) => {
-		return wails.SearchVideos(query);
+		return await wails.SearchVideos(query);
 	};
 }

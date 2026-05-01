@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 
 	"music-app/internal/service"
 
@@ -20,16 +20,16 @@ func InitHandlers() *Handler {
 
 func (it *Handler) Startup(ctx context.Context) {
 	it.ctx = ctx
-	err := client.Login("750103575459397733")
-	if err != nil {
-		fmt.Println("Discord não encontrado ou fechado:", err)
-		return
-	}
+	// err := client.Login("")
+	// if err != nil {
+	// 	fmt.Println("Discord não encontrado ou fechado:", err)
+	// 	return
+	// }
 
-	err = service.SetDiscordPresence("Ouvindo Musga", "Musiga Boa")
-	if err != nil {
-		fmt.Println("Erro ao ativar presença inicial:", err)
-	}
+	// err = service.SetDiscordPresence("Ouvindo Musga", "Musiga Boa")
+	// if err != nil {
+	// 	fmt.Println("Erro ao ativar presença inicial:", err)
+	// }
 }
 
 func (a *Handler) Shutdown(ctx context.Context) {
@@ -60,6 +60,6 @@ func (it *Handler) SearchVideos(query string) ([]service.VideoResult, error) {
 	return service.SearchVideos(query)
 }
 
-func (it *Handler) SetDiscordPresence(details string, state string) error {
-	return service.SetDiscordPresence(details, state)
-}
+// func (it *Handler) SetDiscordPresence(details string, state string) error {
+// 	return service.SetDiscordPresence(details, state)
+// }

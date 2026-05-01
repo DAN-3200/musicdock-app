@@ -10,7 +10,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/hugolgst/rich-go/client"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -111,7 +113,7 @@ func SearchVideos(query string) ([]VideoResult, error) {
 				Url:       "https://www.youtube.com/watch?v=" + vr.VideoID,
 			})
 
-			if len(results) == 15 {
+			if len(results) == 20 {
 				return results, nil
 			}
 		}
@@ -162,6 +164,7 @@ func GetAudioUrl(url string) (string, error) {
 	}
 	return directUrl, nil
 }
+
 func DownloadSong(url string, pathName string) error {
 	// 1. Pegar o stream usando sua função existente
 	stream, err := music.YoutubeByStream(url)
@@ -195,4 +198,24 @@ func SaveSongDialog(ctx context.Context, songName string) (string, error) {
 		return "", err
 	}
 	return filepath, nil // Retorna o caminho escolhido (ex: C:\Musicas\teste.webm)
+}
+
+func SetDiscordPresence(details string, state string) error {
+	now := time.Now()
+
+	err := client.SetActivity(client.Activity{
+		State:      state,
+		Details:    details,
+		LargeImage: "embedded_background", // Nome da imagem enviada no painel do desenvolvedor
+		LargeText:  "Meu App Wails",
+		Timestamps: &client.Timestamps{
+			Start: &now,
+		},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

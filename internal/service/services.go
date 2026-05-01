@@ -201,15 +201,25 @@ func SaveSongDialog(ctx context.Context, songName string) (string, error) {
 }
 
 func SetDiscordPresence(details string, state string) error {
-	now := time.Now()
+	start := time.Now()
+	// O segredo está aqui: o tempo atual + a duração da música
+	end := start.Add(time.Duration(199) * time.Second)
 
 	err := client.SetActivity(client.Activity{
 		State:      state,
 		Details:    details,
 		LargeImage: "embedded_background", // Nome da imagem enviada no painel do desenvolvedor
+		SmallImage: "",
 		LargeText:  "Meu App Wails",
 		Timestamps: &client.Timestamps{
-			Start: &now,
+			Start: &start,
+			End:   &end,
+		},
+		Buttons: []*client.Button{
+			{
+				Label: "Listen on MusicDock",
+				Url:   "https://seu-site-ou-github.com",
+			},
 		},
 	})
 

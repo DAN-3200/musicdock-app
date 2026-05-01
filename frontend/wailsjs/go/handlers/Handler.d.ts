@@ -13,5 +13,3 @@ export function GetSearchSuggestions(arg1:string):Promise<Array<string>>;
 export function SaveSongDialog(arg1:string):Promise<string>;
 
 export function SearchVideos(arg1:string):Promise<Array<service.VideoResult>>;
-
-export function SetDiscordPresence(arg1:string,arg2:string):Promise<void>;

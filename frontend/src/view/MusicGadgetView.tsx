@@ -5,11 +5,12 @@ import {
   Play, Pause, SkipBack, SkipForward,
   Volume2, VolumeX, Volume1,
   Download, Loader2, ListMusic, Disc3, Minus,
-  Shuffle, Repeat, Repeat1, Infinity as InfinityIcon,
+  Shuffle, Repeat, Repeat1,
+  CirclePlay,
 } from "lucide-react";
 
 import { SongController } from "../infra/song.controller";
-import { usePlayer, useSearch, useSearchSuggestions } from "./usePlayer";
+import { usePlayer, useSearch, useSearchSuggestions } from "../logic/usePlayer";
 import { NativeCommands } from "../infra/commands.native";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +23,7 @@ type View = "player" | "search" | "queue";
 // ─── Volume icon ────────────────────────────────────────────────────────────
 const VolIcon = ({ v }: { v: number }) => {
   if (v === 0) return <VolumeX className="w-3.5 h-3.5" strokeWidth={2.25} />;
-  if (v < 50)  return <Volume1 className="w-3.5 h-3.5" strokeWidth={2.25} />;
+  if (v < 50) return <Volume1 className="w-3.5 h-3.5" strokeWidth={2.25} />;
   return <Volume2 className="w-3.5 h-3.5" strokeWidth={2.25} />;
 };
 
@@ -35,15 +36,13 @@ const TabBtn = ({
 }) => (
   <button
     type="button" onClick={onClick}
-    className={`relative flex-1 h-full flex items-center justify-center gap-2 label-mono text-[11px] transition-colors ${
-      active ? "bg-neutral-900 text-white" : "hover:bg-neutral-100"
-    }`}
+    className={`relative flex-1 h-full flex items-center justify-center gap-2 label-mono text-[11px] transition-colors ${active ? "bg-neutral-900 text-white" : "hover:bg-neutral-100"
+      }`}
   >
     {icon}<span>{label}</span>
     {badge !== undefined && badge > 0 && (
-      <span className={`absolute top-1 right-2 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold ${
-        active ? "bg-yellow-400 text-neutral-900" : "bg-neutral-900 text-white"
-      }`}>
+      <span className={`absolute top-1 right-2 min-w-[18px] h-[18px] px-1 grid place-items-center text-[10px] font-bold ${active ? "bg-yellow-400 text-neutral-900" : "bg-neutral-900 text-white"
+        }`}>
         {badge}
       </span>
     )}
@@ -51,7 +50,7 @@ const TabBtn = ({
 );
 
 // ─── Main gadget ─────────────────────────────────────────────────────────────
-export const PageTestView = () => {
+export const MusicGadgetView = () => {
   const {
     queue, currentIndex, activeItem, hasNext, hasPrev,
     enqueue, enqueueAndPlay, dequeue, playAt, playNext, playPrev,
@@ -95,7 +94,7 @@ export const PageTestView = () => {
       if (/INPUT|TEXTAREA/.test(tag) || !activeItem) return;
       if (e.code === "Space") { e.preventDefault(); isPlaying ? pause() : play(); }
       else if (e.key === "ArrowRight") seek(Math.min(duration, currentTime + 5));
-      else if (e.key === "ArrowLeft")  seek(Math.max(0, currentTime - 5));
+      else if (e.key === "ArrowLeft") seek(Math.max(0, currentTime - 5));
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -108,13 +107,13 @@ export const PageTestView = () => {
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.25 }}
         className="w-[95%] h-[95%] relative bg-white text-neutral-900 border-2 border-neutral-900 shadow-[8px_8px_0_0_theme(colors.black/0.6)] flex flex-col overflow-hidden"
-       
+
       >
         {/* Title bar */}
         <header className="h-10 shrink-0 bg-neutral-900 text-white flex items-center justify-between px-3 select-none wails-draggable">
           <div className="flex items-center gap-2">
             <Disc3 className={`w-5 h-5 ${isPlaying ? "animate-spin" : ""}`} strokeWidth={2.5} />
-            <span className="label-mono text-[12px]">GOPHER · GADGET</span>
+            <span className="label-mono text-[12px]">MUSICDOCK · GADGET</span>
           </div>
           <div className="flex items-center gap-1.5">
             <button onClick={() => NativeCommands.Minimizar()} className="p-2 grid place-items-center hover:bg-white/20">
@@ -208,7 +207,7 @@ export const PageTestView = () => {
                         ? <Loader2 className="w-5 h-5 animate-spin" strokeWidth={2.5} />
                         : !isPaused
                           ? <Pause className="w-5 h-5" strokeWidth={2.5} />
-                          : <Play  className="w-5 h-5 ml-0.5" strokeWidth={2.5} />}
+                          : <Play className="w-5 h-5 ml-0.5" strokeWidth={2.5} />}
                     </motion.button>
                     <button
                       type="button" onClick={playNext} disabled={!hasNext}
@@ -250,7 +249,7 @@ export const PageTestView = () => {
                       aria-pressed={autoplay}
                       title={`Autoplay: ${autoplay ? "ON" : "OFF"}`}
                     >
-                      <InfinityIcon className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      <CirclePlay className="w-3.5 h-3.5" strokeWidth={2.5} />
                     </button>
 
                     <button
@@ -361,9 +360,8 @@ export const PageTestView = () => {
                               key={video.id} layout
                               initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
                               transition={{ delay: i * 0.01, duration: 0.15 }}
-                              className={`group flex items-center gap-2 px-2 py-1.5 border-b border-neutral-200 ${
-                                isAct ? "bg-yellow-400 text-neutral-900" : "hover:bg-neutral-100"
-                              }`}
+                              className={`group flex items-center gap-2 px-2 py-1.5 border-b border-neutral-200 ${isAct ? "bg-yellow-400 text-neutral-900" : "hover:bg-neutral-100"
+                                }`}
                             >
                               <span className="label-mono opacity-60 w-5 text-right shrink-0">
                                 {(i + 1).toString().padStart(2, "0")}
@@ -384,9 +382,8 @@ export const PageTestView = () => {
                               </button>
                               <button
                                 type="button" onClick={() => enqueue(video)} disabled={inQ}
-                                className={`w-6 h-6 grid place-items-center border border-neutral-900 ${
-                                  inQ ? "opacity-40" : "bg-neutral-900 text-white hover:bg-yellow-400 hover:border-yellow-400"
-                                }`}
+                                className={`w-6 h-6 grid place-items-center border border-neutral-900 ${inQ ? "opacity-40" : "bg-neutral-900 text-white hover:bg-yellow-400 hover:border-yellow-400"
+                                  }`}
                                 aria-label={inQ ? "Queued" : "Enqueue"}
                               >
                                 {inQ ? <Check className="w-3 h-3" strokeWidth={2.5} /> : <Plus className="w-3 h-3" strokeWidth={2.5} />}
@@ -425,9 +422,8 @@ export const PageTestView = () => {
                             initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.15 }}
-                            className={`group flex items-center gap-2 px-2 py-1.5 border-b border-neutral-200 ${
-                              isAct ? "bg-neutral-900 text-white" : "hover:bg-neutral-100"
-                            }`}
+                            className={`group flex items-center gap-2 px-2 py-1.5 border-b border-neutral-200 ${isAct ? "bg-neutral-900 text-white" : "hover:bg-neutral-100"
+                              }`}
                           >
                             <span className="label-mono w-5 text-center shrink-0">
                               {isAct ? "▶" : (i + 1).toString().padStart(2, "0")}
@@ -440,9 +436,8 @@ export const PageTestView = () => {
                             </button>
                             <button
                               type="button" onClick={() => dequeue(i)} aria-label="Remove"
-                              className={`w-5 h-5 grid place-items-center transition-opacity hover:text-yellow-400 ${
-                                isAct ? "opacity-90" : "opacity-0 group-hover:opacity-100"
-                              }`}
+                              className={`w-5 h-5 grid place-items-center transition-opacity hover:text-yellow-400 ${isAct ? "opacity-90" : "opacity-0 group-hover:opacity-100"
+                                }`}
                             >
                               <X className="w-3 h-3" strokeWidth={2.5} />
                             </button>
@@ -481,4 +476,4 @@ export const PageTestView = () => {
   );
 };
 
-export default PageTestView;
+export default MusicGadgetView;

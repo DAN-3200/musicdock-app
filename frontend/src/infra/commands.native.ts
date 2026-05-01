@@ -29,4 +29,8 @@ export class NativeCommands {
 	static GetSearchSuggestions = async (input: string) => {
 		return await wails.GetSearchSuggestions(input);
 	};
+
+	static SearchVideos = async (query: string) => {
+		return wails.SearchVideos(query);
+	};
 }

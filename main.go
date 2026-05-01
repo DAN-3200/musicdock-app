@@ -7,6 +7,7 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
 //go:embed all:frontend/dist
@@ -16,7 +17,7 @@ func main() {
 	app := handlers.InitHandlers()
 
 	err := wails.Run(&options.App{
-		Title:         "music-app",
+		Title:         "MusicDock Engine",
 		Width:         480,
 		Height:        480,
 		Frameless:     true,
@@ -24,10 +25,17 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 40, G: 40, B: 43, A: 1},
+		BackgroundColour: &options.RGBA{R: 40, G: 40, B: 43, A: 0},
 		OnStartup:        app.Startup,
+		OnShutdown:       app.Shutdown,
 		Bind: []any{
 			app,
+		},
+		Windows: &windows.Options{
+			WebviewIsTransparent:              true,
+			WindowIsTranslucent:               true,
+			BackdropType:                      windows.None, // Fundamental para transparência total
+			DisableFramelessWindowDecorations: true,         // ESTA é a chave para remover bordas nativas
 		},
 	})
 

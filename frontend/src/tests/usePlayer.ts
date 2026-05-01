@@ -11,6 +11,8 @@ export interface VideoResult {
 	url: string;
 }
 
+export type LoopMode = 'off' | 'all' | 'one';
+
 // ─── useSearch ────────────────────────────────────────────────────────────────
 
 export function useSearch() {
@@ -57,24 +59,92 @@ export function usePlayer() {
 	const [isPaused, setIsPaused] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
+	// ─── Playback modes ───────────────────────────────────────────────────────
+	const [autoplay, setAutoplay] = useState(true);
+	const [shuffle, setShuffle] = useState(false);
+	const [loop, setLoop] = useState<LoopMode>('off');
+
+	const toggleAutoplay = useCallback(() => setAutoplay((v) => !v), []);
+	const toggleShuffle = useCallback(() => setShuffle((v) => !v), []);
+	const cycleLoop = useCallback(
+		() => setLoop((m) => (m === 'off' ? 'all' : m === 'all' ? 'one' : 'off')),
+		[],
+	);
+
 	const songRef = useRef<SongController | null>(null);
 
-	const liveRef = useRef({ queue, currentIndex });
-	useEffect(() => { liveRef.current = { queue, currentIndex }; }, [queue, currentIndex]);
+	const liveRef = useRef({ queue, currentIndex, autoplay, shuffle, loop });
+	useEffect(() => {
+		liveRef.current = { queue, currentIndex, autoplay, shuffle, loop };
+	}, [queue, currentIndex, autoplay, shuffle, loop]);
 
 	const activeItem = currentIndex >= 0 ? (queue[currentIndex] ?? null) : null;
-	const hasNext = currentIndex >= 0 && currentIndex < queue.length - 1;
-	const hasPrev = currentIndex > 0;
-	const isPlaying = !isLoading && !!activeItem && currentTime > 0 && currentTime < duration;
+	const hasNext =
+		queue.length > 0 &&
+		(loop === 'all' || shuffle || currentIndex < queue.length - 1);
+	const hasPrev =
+		queue.length > 0 && (loop === 'all' || shuffle || currentIndex > 0);
+	const isPlaying =
+		!isLoading && !!activeItem && currentTime > 0 && currentTime < duration;
+
+	// ─── Helpers for next index ───────────────────────────────────────────────
+	const pickNextIndex = useCallback((opts: { fromAutoEnd: boolean }) => {
+		const {
+			queue: q,
+			currentIndex: ci,
+			shuffle: sh,
+			loop: lp,
+		} = liveRef.current;
+		if (q.length === 0) return -1;
+
+		if (opts.fromAutoEnd && lp === 'one') return ci;
+
+		if (sh) {
+			if (q.length === 1) return lp === 'off' && opts.fromAutoEnd ? -1 : 0;
+			let next = ci;
+			while (next === ci) next = Math.floor(Math.random() * q.length);
+			return next;
+		}
+
+		if (ci + 1 < q.length) return ci + 1;
+		if (lp === 'all') return 0;
+		return -1;
+	}, []);
+
+	const pickPrevIndex = useCallback(() => {
+		const {
+			queue: q,
+			currentIndex: ci,
+			shuffle: sh,
+			loop: lp,
+		} = liveRef.current;
+		if (q.length === 0) return -1;
+
+		if (sh) {
+			if (q.length === 1) return 0;
+			let prev = ci;
+			while (prev === ci) prev = Math.floor(Math.random() * q.length);
+			return prev;
+		}
+
+		if (ci - 1 >= 0) return ci - 1;
+		if (lp === 'all') return q.length - 1;
+		return ci;
+	}, []);
 
 	const enqueue = useCallback((video: VideoResult) => {
-		setQueue((prev) => prev.some((v) => v.id === video.id) ? prev : [...prev, video]);
+		setQueue((prev) =>
+			prev.some((v) => v.id === video.id) ? prev : [...prev, video],
+		);
 	}, []);
 
 	const enqueueAndPlay = useCallback((video: VideoResult) => {
 		setQueue((prev) => {
 			const existing = prev.findIndex((v) => v.id === video.id);
-			if (existing >= 0) { setCurrentIndex(existing); return prev; }
+			if (existing >= 0) {
+				setCurrentIndex(existing);
+				return prev;
+			}
 			setCurrentIndex(prev.length);
 			return [...prev, video];
 		});
@@ -90,12 +160,27 @@ export function usePlayer() {
 	}, []);
 
 	const playAt = useCallback((index: number) => setCurrentIndex(index), []);
-	const playNext = useCallback(() => setCurrentIndex((i) => i + 1), []);
-	const playPrev = useCallback(() => setCurrentIndex((i) => (i > 0 ? i - 1 : i)), []);
+	const playNext = useCallback(() => {
+		const next = pickNextIndex({ fromAutoEnd: false });
+		if (next >= 0) setCurrentIndex(next);
+	}, [pickNextIndex]);
+	const playPrev = useCallback(() => {
+		const prev = pickPrevIndex();
+		if (prev >= 0) setCurrentIndex(prev);
+	}, [pickPrevIndex]);
 
-	const play = useCallback(() => { setIsPaused(false); songRef.current?.play(); }, []);
-	const pause = useCallback(() => { setIsPaused(true); songRef.current?.pause(); }, []);
-	const seek  = useCallback((time: number) => { setCurrentTime(time); songRef.current?.seek(time); }, []);
+	const play = useCallback(() => {
+		setIsPaused(false);
+		songRef.current?.play();
+	}, []);
+	const pause = useCallback(() => {
+		setIsPaused(true);
+		songRef.current?.pause();
+	}, []);
+	const seek = useCallback((time: number) => {
+		setCurrentTime(time);
+		songRef.current?.seek(time);
+	}, []);
 
 	const download = useCallback(async () => {
 		if (!activeItem) return;
@@ -131,15 +216,35 @@ export function usePlayer() {
 				controller.setVolume(volume);
 				songRef.current = controller;
 
+				if (autoplay) {
+					controller.play();
+					setIsPaused(false);
+				}
+
 				interval = setInterval(() => {
 					if (!songRef.current) return;
 					const progress = songRef.current.progress;
 					const dur = songRef.current.duration;
 					setCurrentTime(progress);
 					setDuration(dur);
+
 					if (dur > 0 && progress >= dur - 0.5) {
-						const { queue: q, currentIndex: ci } = liveRef.current;
-						if (ci + 1 < q.length) playAt(ci + 1);
+						const { autoplay: ap, loop: lp } = liveRef.current;
+
+						// Loop one: re-seek to start regardless of autoplay
+						if (lp === 'one') {
+							songRef.current.seek(0);
+							setCurrentTime(0);
+							return;
+						}
+
+						if (ap) {
+							const next = pickNextIndex({ fromAutoEnd: true });
+							if (next >= 0) playAt(next);
+						} else {
+							// Se estiver desligado, apenas pausa ao chegar no fim[cite: 3]
+							setIsPaused(true);
+						}
 					}
 				}, 500);
 			} catch (err) {
@@ -158,15 +263,43 @@ export function usePlayer() {
 			songRef.current = null;
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [activeItem?.url]);
+	}, [activeItem?.url, pickNextIndex, playAt]);
 
-	useEffect(() => { songRef.current?.setVolume(volume); }, [volume]);
+	useEffect(() => {
+		songRef.current?.setVolume(volume);
+	}, [volume]);
 
 	return {
-		queue, currentIndex, activeItem, hasNext, hasPrev,
-		enqueue, enqueueAndPlay, dequeue, playAt, playNext, playPrev,
-		volume, setVolume, currentTime, duration,
-		isLoading, isDownloading, isPlaying, isPaused, error,
-		play, pause, seek, download,
+		queue,
+		currentIndex,
+		activeItem,
+		hasNext,
+		hasPrev,
+		enqueue,
+		enqueueAndPlay,
+		dequeue,
+		playAt,
+		playNext,
+		playPrev,
+		volume,
+		setVolume,
+		currentTime,
+		duration,
+		isLoading,
+		isDownloading,
+		isPlaying,
+		isPaused,
+		error,
+		play,
+		pause,
+		seek,
+		download,
+		// new playback modes
+		autoplay,
+		shuffle,
+		loop,
+		toggleAutoplay,
+		toggleShuffle,
+		cycleLoop,
 	};
 }

@@ -1,5 +1,5 @@
 import * as wails from '../../../frontend/wailsjs/go/handlers/Handler';
-import { WindowMinimise, WindowHide } from '../../wailsjs/runtime';
+import { WindowMinimise, Hide } from '../../wailsjs/runtime';
 
 export class NativeCommands {
 	static Minimizar = async () => {
@@ -23,7 +23,7 @@ export class NativeCommands {
 	};
 
 	static WindowHide = () => {
-		WindowHide();
+		Hide();
 	};
 
 	static GetSearchSuggestions = async (input: string) => {

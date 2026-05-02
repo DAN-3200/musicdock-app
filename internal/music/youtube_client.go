@@ -10,11 +10,8 @@ import (
 )
 
 // Baixar video localmente
-func YoutubeByStream(url string) (io.ReadCloser, error) {
+func YoutubeByStream(ctx context.Context, url string) (io.ReadCloser, error) {
 	client := youtube.Client{}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	video, err := client.GetVideoContext(ctx, url)
 	if err != nil {
@@ -23,9 +20,9 @@ func YoutubeByStream(url string) (io.ReadCloser, error) {
 
 	formats := video.Formats.WithAudioChannels().Type("audio")
 
-	stream, _, err := client.GetStream(video, &formats[0])
+	stream, _, err := client.GetStreamContext(ctx, video, &formats[0])
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return stream, nil

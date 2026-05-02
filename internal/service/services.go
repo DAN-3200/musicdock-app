@@ -14,6 +14,7 @@ import (
 
 	"github.com/hugolgst/rich-go/client"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"runtime/debug"
 )
 
 type VideoResult struct {
@@ -166,8 +167,10 @@ func GetAudioUrl(url string) (string, error) {
 }
 
 func DownloadSong(url string, pathName string) error {
-	// 1. Pegar o stream usando sua função existente
-	stream, err := music.YoutubeByStream(url)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() 
+
+	stream, err := music.YoutubeByStream(ctx, url)
 	if err != nil {
 		return err
 	}
@@ -181,8 +184,14 @@ func DownloadSong(url string, pathName string) error {
 
 	// 3. O io.Copy é perfeito aqui porque ele transfere os bytes
 	// conforme eles chegam, sem carregar tudo na RAM (essencial para arquivos grandes)
-	_, err = io.Copy(file, stream)
-	return err
+	buf := make([]byte, 32*1024)
+	_, err = io.CopyBuffer(file, stream, buf)
+	if err != nil {
+		return err
+	}
+
+	debug.FreeOSMemory()
+	return nil
 }
 
 func SaveSongDialog(ctx context.Context, songName string) (string, error) {
@@ -197,6 +206,7 @@ func SaveSongDialog(ctx context.Context, songName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	
 	return filepath, nil // Retorna o caminho escolhido (ex: C:\Musicas\teste.webm)
 }
 

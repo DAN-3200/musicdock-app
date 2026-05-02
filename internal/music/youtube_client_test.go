@@ -1,6 +1,7 @@
 package music_test
 
 import (
+	"context"
 	"io"
 	"music-app/internal/music"
 	"os"
@@ -11,7 +12,10 @@ import (
 )
 
 func Test_YoutubeClientStream(t *testing.T) {
-	stream, err := music.YoutubeByStream("https://music.youtube.com/watch?v=xlkhICahOLA&list=LM")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	
+	stream, err := music.YoutubeByStream(ctx, "https://music.youtube.com/watch?v=xlkhICahOLA&list=LM")
 	require.NoError(t, err)
 
 	file, err := os.Create("video.mp4")

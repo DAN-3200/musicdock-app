@@ -2,10 +2,15 @@ package handlers
 
 import (
 	"context"
+	"embed"
+
 	// "fmt"
 
 	"music-app/internal/service"
 
+	r "runtime"
+
+	"github.com/getlantern/systray"
 	"github.com/hugolgst/rich-go/client"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -63,3 +68,40 @@ func (it *Handler) SearchVideos(query string) ([]service.VideoResult, error) {
 // func (it *Handler) SetDiscordPresence(details string, state string) error {
 // 	return service.SetDiscordPresence(details, state)
 // }
+
+func OnReady(app *Handler, recursos embed.FS) func() {
+	return func() {
+		var iconBytes []byte
+		sytemaOperacional := r.GOOS
+		switch sytemaOperacional {
+		case "windows":
+			iconBytes, _ = recursos.ReadFile("img/icon.ico")
+		default:
+			iconBytes, _ = recursos.ReadFile("img/appicon.png")
+		}
+		systray.SetIcon(iconBytes)
+
+		systray.SetTitle("Meu App")
+		systray.SetTooltip("Clique para abrir")
+
+		mOpen := systray.AddMenuItem("Abrir App", "Mostra a janela")
+		mHidden := systray.AddMenuItem("Esconder App", "Esconde o App")
+		mQuit := systray.AddMenuItem("Sair", "Fecha o app")
+
+		for {
+			select {
+			case <-mOpen.ClickedCh:
+				runtime.WindowShow(app.ctx)
+			case <-mHidden.ClickedCh:
+				runtime.Hide(app.ctx)
+			case <-mQuit.ClickedCh:
+				runtime.Quit(app.ctx)
+				return
+			}
+		}
+	}
+}
+
+func OnExit() {
+	// Limpeza se necessário
+}

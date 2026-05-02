@@ -119,7 +119,7 @@ export const MusicGadgetView = () => {
             <button onClick={() => NativeCommands.Minimizar()} className="p-2 grid place-items-center hover:bg-white/20">
               <Minus className="w-3.5 h-3.5" strokeWidth={3} />
             </button>
-            <button onClick={() => NativeCommands.CloseWindow()} className="p-2 grid place-items-center hover:bg-yellow-400/50">
+            <button onClick={() => NativeCommands.WindowHide()} className="p-2 grid place-items-center hover:bg-yellow-400/50">
               <X className="w-3.5 h-3.5" strokeWidth={3} />
             </button>
           </div>

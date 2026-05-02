@@ -4,6 +4,7 @@ import (
 	"embed"
 	"music-app/internal/handlers"
 
+	"github.com/getlantern/systray"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -14,8 +15,15 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed all:img/*
+var recursos embed.FS
+
 func main() {
 	app := handlers.InitHandlers()
+
+	go func() {
+		systray.Run(handlers.OnReady(app, recursos), handlers.OnExit)
+	}()
 
 	err := wails.Run(&options.App{
 		Title:         "MusicDock Engine",

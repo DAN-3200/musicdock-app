@@ -33,4 +33,15 @@ export class NativeCommands {
 	static SearchVideos = async (query: string) => {
 		return await wails.SearchVideos(query);
 	};
+
+	static SetDiscordPresence = async (
+		a: string,
+		b: string,
+		c: string,
+		d: string,
+		e: number,
+		f: number,
+	) => {
+		await wails.SetDiscordPresence(a, b, c, d, e, f);
+	};
 }

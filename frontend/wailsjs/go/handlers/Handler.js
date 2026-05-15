@@ -25,3 +25,7 @@ export function SaveSongDialog(arg1) {
 export function SearchVideos(arg1) {
   return window['go']['handlers']['Handler']['SearchVideos'](arg1);
 }
+
+export function SetDiscordPresence(arg1, arg2, arg3, arg4, arg5, arg6) {
+  return window['go']['handlers']['Handler']['SetDiscordPresence'](arg1, arg2, arg3, arg4, arg5, arg6);
+}

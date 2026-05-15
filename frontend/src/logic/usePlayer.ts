@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { act, use, useCallback, useEffect, useRef, useState } from 'react';
 import { SongController } from '../infra/song.controller';
 import { NativeCommands } from '../infra/commands.native';
 
@@ -195,6 +195,19 @@ export function usePlayer() {
 			setIsDownloading(false);
 		}
 	}, [activeItem]);
+
+	useEffect(() => {
+		if (!activeItem) return;
+		var now = Math.floor(Date.now() / 1000)
+		NativeCommands.SetDiscordPresence(
+			activeItem.title,
+			'',
+			isPaused ? 'play' : 'pause',
+			activeItem.url,
+			0,
+			0
+		);
+	}, [activeItem, isPaused, currentTime]);
 
 	useEffect(() => {
 		if (!activeItem) return;

@@ -10,11 +10,11 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
+
+	"runtime/debug"
 
 	"github.com/hugolgst/rich-go/client"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"runtime/debug"
 )
 
 type VideoResult struct {
@@ -168,7 +168,7 @@ func GetAudioUrl(url string) (string, error) {
 
 func DownloadSong(url string, pathName string) error {
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel() 
+	defer cancel()
 
 	stream, err := music.YoutubeByStream(ctx, url)
 	if err != nil {
@@ -206,29 +206,26 @@ func SaveSongDialog(ctx context.Context, songName string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return filepath, nil // Retorna o caminho escolhido (ex: C:\Musicas\teste.webm)
 }
 
-func SetDiscordPresence(details string, state string) error {
-	start := time.Now()
-	// O segredo está aqui: o tempo atual + a duração da música
-	end := start.Add(time.Duration(199) * time.Second)
+func SetDiscordPresence(details string, state string, status string, url string, start, end float64) error {
+	if url == "" {
+		url = ""
+	}
 
 	err := client.SetActivity(client.Activity{
 		State:      state,
 		Details:    details,
 		LargeImage: "embedded_background", // Nome da imagem enviada no painel do desenvolvedor
-		SmallImage: "",
+		SmallImage: status,
 		LargeText:  "Meu App Wails",
-		Timestamps: &client.Timestamps{
-			Start: &start,
-			End:   &end,
-		},
+		
 		Buttons: []*client.Button{
 			{
 				Label: "Listen on MusicDock",
-				Url:   "https://seu-site-ou-github.com",
+				Url:   url,
 			},
 		},
 	})
